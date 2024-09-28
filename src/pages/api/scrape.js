@@ -1,7 +1,7 @@
-import * as cheerio from 'cheerio'; // Importar cheerio correctamente
-import fetch from 'node-fetch'; // Para hacer la solicitud HTTP (si no lo tienes instalado, ejecuta `npm install node-fetch`)
+import * as cheerio from 'cheerio';
+import fetch from 'node-fetch';
 
-export async function post({ request }) {
+export async function POST({ request }) {
   const { url } = await request.json();
 
   try {
