@@ -1,25 +1,29 @@
 ---
-import { useState } from 'preact/hooks';
+let url = '';
+let price = null;
 
-const [url, setUrl] = useState('');
-const [price, setPrice] = useState(null);
-
-const checkPrice = async (e) => {
-  e.preventDefault();
+async function checkPrice(event) {
+  event.preventDefault();
   const response = await fetch('/api/scrape', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url }),
   });
-  const data = await response.json();
-  setPrice(data.price);
-};
+
+  if (response.ok) {
+    const data = await response.json();
+    price = data.price;
+	console.log({price})
+  } else {
+    console.error('Error al obtener el precio.');
+  }
+}
 ---
 
 <form onSubmit={checkPrice}>
   <label for="url">URL del producto de Amazon:</label>
-  <input type="text" id="url" value={url} onInput={(e) => setUrl(e.target.value)} required />
+  <input type="text" id="url" value={url} onInput={(e) => url = e.target.value} required />
   <button type="submit">Verificar Precio</button>
 </form>
 
-{price && <p>El precio actual es: ${price}</p>}
+{price !== null && <p>El precio actual es: ${price}</p>}
