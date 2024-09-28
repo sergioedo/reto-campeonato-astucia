@@ -1,24 +1,25 @@
-import cheerio from 'cheerio';
-import axios from 'axios';
+import * as cheerio from 'cheerio'; // Importar cheerio correctamente
+import fetch from 'node-fetch'; // Para hacer la solicitud HTTP (si no lo tienes instalado, ejecuta `npm install node-fetch`)
 
 export async function post({ request }) {
   const { url } = await request.json();
-  
+
   try {
-    const { data } = await axios.get(url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
-      },
-    });
-    
-    const $ = cheerio.load(data);
-    const priceText = $('#priceblock_ourprice').text().trim() || $('#priceblock_dealprice').text().trim();
-    const price = parseFloat(priceText.replace(/[^\d\.]/g, ''));
-    
+    // Hacer la solicitud a la URL del producto de Amazon
+    const response = await fetch(url);
+    const html = await response.text();
+
+    // Cargar el HTML en Cheerio
+    const $ = cheerio.load(html);
+
+    // Extraer el precio usando el selector adecuado (esto puede variar según la página de Amazon)
+    const priceElement = $('#priceblock_ourprice').text(); // Modifica esto según el HTML real
+    const price = parseFloat(priceElement.replace(/[^\d.-]/g, '')); // Limpiar el precio para convertirlo en número
+
     return new Response(JSON.stringify({ price }), { status: 200 });
-  } catch (error) {
-    console.error('Error during scraping:', error);
-    return new Response('Error al hacer scraping', { status: 500 });
+
+  } catch (err) {
+    console.error('Error al hacer scraping del precio:', err);
+    return new Response(JSON.stringify({ error: 'Error al obtener el precio' }), { status: 500 });
   }
 }
