@@ -1,29 +1,15 @@
 ---
-let url = '';
-let price = null;
-
-async function checkPrice(event) {
-  event.preventDefault();
-  const response = await fetch('/api/scrape', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url }),
-  });
-
-  if (response.ok) {
-    const data = await response.json();
-    price = data.price;
-	console.log({price})
-  } else {
-    console.error('Error al obtener el precio.');
-  }
-}
+import PriceChecker from '../components/PriceChecker.jsx';
 ---
 
-<form onSubmit={checkPrice}>
-  <label for="url">URL del producto de Amazon:</label>
-  <input type="text" id="url" value={url} onInput={(e) => url = e.target.value} required />
-  <button type="submit">Verificar Precio</button>
-</form>
-
-{price !== null && <p>El precio actual es: ${price}</p>}
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monitor de Precio de Amazon</title>
+  </head>
+  <body>
+    <h1>Monitor de Precio de Amazon</h1>
+    <PriceChecker client:load />
+  </body>
+</html>
