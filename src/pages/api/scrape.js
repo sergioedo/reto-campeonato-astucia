@@ -1,10 +1,10 @@
 import * as cheerio from 'cheerio';
 import fetch from 'node-fetch';
-import { Client } from 'turso'; // Importar el cliente de TursoDB
+import { createClient } from "@libsql/client";
 
-const client = new Client({
-	url: import.meta.env.TURSO_DB_URL,
-	token: import.meta.env.TURSO_DB_TOKEN,
+const client = new createClient({
+	url: import.meta.env.TURSODB_URL,
+	authToken: import.meta.env.TURSODB_TOKEN,
 });
 
 export async function POST({ request }) {
@@ -37,18 +37,19 @@ export async function POST({ request }) {
     }
 
 	// Comprobar el umbral
-	const lastPriceResult = await client.query('SELECT price FROM product_prices WHERE url = ? ORDER BY timestamp DESC LIMIT 1', [url]);
+	const lastPriceResult = await client.execute('SELECT price FROM product_prices WHERE url = ? ORDER BY timestamp DESC LIMIT 1', [url]);
 	const lastPrice = lastPriceResult.rows[0]?.price;
 
 	if (lastPrice !== undefined) {
 		const threshold = lastPrice * 0.05; // 5% de umbral
 		if (Math.abs(price - lastPrice) > threshold) {
 			// Aquí puedes implementar la lógica para notificar al usuario
+			console.log(`Precio modificado: ${lastPrice} -> ${price}`)
 		}
 	}
 
 	// Guardar en la base de datos
-    const result = await client.query('INSERT INTO product_prices (url, price, timestamp) VALUES (?, ?, ?)', [url, price, new Date()]);
+    const result = await client.execute('INSERT INTO product_prices (url, price) VALUES (?, ?)', [url, price]);
 
     return new Response(JSON.stringify({ price }), { status: 200 });
 
