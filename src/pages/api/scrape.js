@@ -1,5 +1,11 @@
 import * as cheerio from 'cheerio';
 import fetch from 'node-fetch';
+import { Client } from 'turso'; // Importar el cliente de TursoDB
+
+const client = new Client({
+	url: import.meta.env.TURSO_DB_URL,
+	token: import.meta.env.TURSO_DB_TOKEN,
+});
 
 export async function POST({ request }) {
   const { url } = await request.json();
@@ -29,6 +35,20 @@ export async function POST({ request }) {
     if (!price) {
       throw new Error('No se encontró el precio en la página.');
     }
+
+	// Comprobar el umbral
+	const lastPriceResult = await client.query('SELECT price FROM product_prices WHERE url = ? ORDER BY timestamp DESC LIMIT 1', [url]);
+	const lastPrice = lastPriceResult.rows[0]?.price;
+
+	if (lastPrice !== undefined) {
+		const threshold = lastPrice * 0.05; // 5% de umbral
+		if (Math.abs(price - lastPrice) > threshold) {
+			// Aquí puedes implementar la lógica para notificar al usuario
+		}
+	}
+
+	// Guardar en la base de datos
+    const result = await client.query('INSERT INTO product_prices (url, price, timestamp) VALUES (?, ?, ?)', [url, price, new Date()]);
 
     return new Response(JSON.stringify({ price }), { status: 200 });
 
