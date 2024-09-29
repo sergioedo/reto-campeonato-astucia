@@ -54,30 +54,48 @@ const scrapeProduct = async (url) => {
 	return { price, lastPrice }
 }
 
-// Manual scrape (specified by user request)
-export async function POST({ request }) {
-	try {
-		const { url } = await request.json();
-		const { price } = await scrapeProduct(url)
-		return new Response(JSON.stringify({ price }), { status: 200 });
+const handleScrapeResponse = ({ price }) => {
+	return new Response(JSON.stringify({ price }), { status: 200 });
+}
 
+const handleScrapeError = (error) => {	
+	console.error('Error al hacer scraping del precio:', error);
+	return new Response(JSON.stringify({ error: 'Error al obtener el precio' }), { status: 500 });
+}
+
+const handleScrapeProduct = async (url, scrapeResponseHandler, scrapeErrorHandler) => {
+	try {		
+		const { price } = await scrapeProduct(url)
+		return scrapeResponseHandler({ price });
 	} catch (err) {
-		console.error('Error al hacer scraping del precio:', err);
-		return new Response(JSON.stringify({ error: 'Error al obtener el precio' }), { status: 500 });
+		return scrapeErrorHandler(err);
 	}
 }
 
+// ----------------------------------------
+// Manual scrape (specified by user request)
+// ----------------------------------------
+export async function POST({ request }) {
+	const { url } = await request.json();
+	return handleScrapeProduct(url, handleScrapeResponse, handleScrapeError);
+}
+
+// ----------------------------------------
 // Automatic scrape (last requested url)
+// ----------------------------------------
+const getLatestURL = async () => {
+	const result = await client.execute('SELECT url FROM product_prices ORDER BY id DESC LIMIT 1');
+	const latestUrl = result.rows[0]?.url;
+	return latestUrl;
+}
+
 export async function GET({ request }) {
-	try {
-		const result = await client.execute('SELECT url FROM product_prices ORDER BY id DESC LIMIT 1');
-		const latestUrl = result.rows[0]?.url;
+	const latestUrl = await getLatestURL();
+	return handleScrapeProduct(latestUrl, handleScrapeResponse, handleScrapeError);
+}
 
-		const { price } = await scrapeProduct(latestUrl)
-		return new Response(JSON.stringify({ price }), { status: 200 });
-
-	} catch (err) {
-		console.error('Error al hacer scraping del precio:', err);
-		return new Response(JSON.stringify({ error: 'Error al obtener el precio' }), { status: 500 });
-	}
+// used by uptime robot, automatic periodic refresh
+export async function HEAD({ request }) {
+	const latestUrl = await getLatestURL();
+	return handleScrapeProduct(latestUrl, () => new Response(null, { status: 200 }), handleScrapeError);
 }
