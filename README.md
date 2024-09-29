@@ -1,3 +1,35 @@
+# Arquitectura
+
+
+```mermaid
+graph TD
+    usuario[Usuario] -->|Ingresa URL de Producto| formulario_web[Formulario Web]
+    
+    subgraph "Servidor (Astro + NodeJS)"
+        formulario_web -->|POST URL para Scraping Manual| api_post_scrape[POST /api/scrape]
+        
+        api_post_scrape -->|Obtiene Precio con Cheerio| scraper_nodejs[Scraper NodeJS]
+        
+        scraper_nodejs -->|Guarda en Base de Datos| turso_db[Base de Datos TursoDB]
+        
+        api_get_scrape[GET /api/scrape] -->|Obtiene Precio con Cheerio| scraper_nodejs
+
+		scraper_nodejs -->|Envía Notificación si es necesario| correo_electronico[Correo Electrónico]
+    end
+
+    subgraph "TursoDB"
+        turso_db -->|Guarda Precio en Histórico| tabla_precios[Tabla de Precios]
+    end
+
+    uptimerobot[UptimeRobot] -->|Llama a Scraping Automático cada 15 minutos| api_get_scrape
+```
+
+Visión artística de ChatGPT:
+
+![Diagrama de arquitectura](ARCHITECTURE.webp)
+![Diagrama de arquitectura (v2)](ARCHITECTURE_v2.webp)
+
+
 # Reto: Campeonato de astucia
 
 <!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
