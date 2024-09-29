@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import fetch from 'node-fetch';
 import { createClient } from "@libsql/client";
+import { sendNotificationEmail } from '../../services/mailer.js';
 
 const client = new createClient({
 	url: import.meta.env.TURSODB_URL,
@@ -43,6 +44,7 @@ const scrapeProduct = async (url) => {
 		if (Math.abs(price - lastPrice) > threshold) {
 			// Aquí puedes implementar la lógica para notificar al usuario
 			console.log(`Precio modificado: ${lastPrice} -> ${price}`)
+			await sendNotificationEmail('sergio.edo@gmail.com', '¡Cambio de Precio!', `El nuevo precio es ${price}€. (antes ${lastPrice})`);
 		}
 	}
 
