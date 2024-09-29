@@ -22,3 +22,6 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Ignorar los archivos generados de Vercel en output
+.vercel/output/
